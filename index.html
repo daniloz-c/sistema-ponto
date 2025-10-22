@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ponto - Controle de Horas</title>
+    <meta name="description" content="Sistema profissional de apontamento de horas de trabalho com registro de entrada, almoço e saída">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #e5f0ff 0%, #f0f4ff 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 56rem;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .card {
+            background: linear-gradient(to bottom, #ffffff 0%, #fafcff 100%);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .clock-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .clock-time {
+            font-size: 3.75rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .clock-date {
+            color: #64748b;
+            font-size: 1.125rem;
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+        }
+
+        .btn-primary:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+        }
+
+        .btn-accent:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.4);
+        }
+
+        .timeline {
+            border-left: 2px solid #e2e8f0;
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: -1.75rem;
+            top: 0.25rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background: #3b82f6;
+        }
+
+        .timeline-time {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+        }
+
+        .history-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+
+        .history-day {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .history-day:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-date {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .history-hours {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .history-entries {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .history-entry {
+            background: #f1f5f9;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 640px) {
+            .clock-time {
+                font-size: 2.5rem;
+            }
+
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Ponto</h1>
+            <p>Registre suas horas de trabalho com facilidade</p>
+        </div>
+
+        <div class="card">
+            <div class="clock-section">
+                <div class="clock-time" id="currentTime">00:00:00</div>
+                <div class="clock-date" id="currentDate"></div>
+            </div>
+
+            <div class="buttons-grid">
+                <button class="btn btn-primary" id="btnEntrada" onclick="addEntry('entrada')">
+                    📍 Entrada
+                </button>
+                <button class="btn btn-accent" id="btnAlmocoInicio" onclick="addEntry('almoco_inicio')">
+                    🍽️ Início Almoço
+                </button>
+                <button class="btn btn-accent" id="btnAlmocoFim" onclick="addEntry('almoco_fim')">
+                    ☕ Fim Almoço
+                </button>
+                <button class="btn btn-primary" id="btnSaida" onclick="addEntry('saida')">
+                    🏠 Saída
+                </button>
+            </div>
+
+            <div id="todayTimeline"></div>
+
+            <div class="summary">
+                <div class="summary-label">Total de Horas Trabalhadas</div>
+                <div class="summary-value" id="totalHours">0h 00min</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="history-title">Histórico dos Últimos 7 Dias</h2>
+            <div id="historyContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // Atualizar relógio
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('pt-BR');
+            const date = now.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('currentTime').textContent = time;
+            document.getElementById('currentDate').textContent = date;
+        }
+
+        // Adicionar entrada de ponto
+        function addEntry(type) {
+            const now = new Date();
+            const dateKey = now.toISOString().split('T')[0];
+            
+            // Buscar registros do dia
+            const records = JSON.parse(localStorage.getItem('timeRecords') || '{}');
+            if (!records[dateKey]) {
+                records[dateKey] = [];
+            }
+            
+            // Adicionar nova entrada
+            records[dateKey].push({
+                type: type,
+                time: now.toISOString()
+            });
+            
+            localStorage.setItem('timeRecords', JSON.stringify(records));
+            loadTodayRecords();
+        }
+
+        // Carregar registros de hoje
+        function loadTodayRecords() {
+            const today = new Date().toISOString().split('T')[0];
+            const records = JSON.parse(localStorage.getItem('timeRecords') || '{}');
+            const todayRecords = records[today] || [];
+            
+            // Atualizar botões
+            const hasEntrada = todayRecords.some(r => r.type === 'entrada');
+            const hasAlmocoInicio = todayRecords.some(r => r.type === 'almoco_inicio');
+            const hasAlmocoFim = todayRecords.some(r => r.type === 'almoco_fim');
+            const hasSaida = todayRecords.some(r => r.type === 'saida');
+            
+            document.getElementById('btnEntrada').disabled = hasEntrada;
+            document.getElementById('btnAlmocoInicio').disabled = !hasEntrada || hasAlmocoInicio;
+            document.getElementById('btnAlmocoFim').disabled = !hasAlmocoInicio || hasAlmocoFim;
+            document.getElementById('btnSaida').disabled = !hasAlmocoFim || hasSaida;
+            
+            // Renderizar timeline
+            const timeline = document.getElementById('todayTimeline');
+            if (todayRecords.length > 0) {
+                timeline.innerHTML = '<div class="timeline">' + 
+                    todayRecords.map(entry => {
+                        const time = new Date(entry.time).toLocaleTimeString('pt-BR');
+                        const labels = {
+                            'entrada': 'Entrada',
+                            'almoco_inicio': 'Início do Almoço',
+                            'almoco_fim': 'Fim do Almoço',
+                            'saida': 'Saída'
+                        };
+                        return `
+                            <div class="timeline-item">
+                                <div class="timeline-time">${time}</div>
+                                <div class="timeline-label">${labels[entry.type]}</div>
+                            </div>
+                        `;
+                    }).join('') + 
+                '</div>';
+            } else {
+                timeline.innerHTML = '';
+            }
+            
+            // Calcular horas trabalhadas
+            calculateHours(todayRecords);
+        }
+
+        // Calcular horas trabalhadas
+        function calculateHours(records) {
+            let totalMinutes = 0;
+            
+            const entrada = records.find(r => r.type === 'entrada');
+            const almocoInicio = records.find(r => r.type === 'almoco_inicio');
+            const almocoFim = records.find(r => r.type === 'almoco_fim');
+            const saida = records.find(r => r.type === 'saida');
+            
+            if (entrada && almocoInicio) {
+                const diff = new Date(almocoInicio.time) - new Date(entrada.time);
+                totalMinutes += diff / 60000;
+            }
+            
+            if (almocoFim && saida) {
+                const diff = new Date(saida.time) - new Date(almocoFim.time);
+                totalMinutes += diff / 60000;
+            } else if (almocoFim && !saida) {
+                const diff = new Date() - new Date(almocoFim.time);
+                totalMinutes += diff / 60000;
+            }
+            
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = Math.floor(totalMinutes % 60);
+            
+            document.getElementById('totalHours').textContent = `${hours}h ${minutes}min`;
+        }
+
+        // Carregar histórico
+        function loadHistory() {
+            const records = JSON.parse(localStorage.getItem('timeRecords') || '{}');
+            const dates = Object.keys(records).sort().reverse().slice(0, 7);
+            
+            const container = document.getElementById('historyContainer');
+            
+            if (dates.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b;">Nenhum registro encontrado</p>';
+                return;
+            }
+            
+            container.innerHTML = dates.map(date => {
+                const dayRecords = records[date];
+                const formattedDate = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Calcular horas do dia
+                let totalMinutes = 0;
+                const entrada = dayRecords.find(r => r.type === 'entrada');
+                const almocoInicio = dayRecords.find(r => r.type === 'almoco_inicio');
+                const almocoFim = dayRecords.find(r => r.type === 'almoco_fim');
+                const saida = dayRecords.find(r => r.type === 'saida');
+                
+                if (entrada && almocoInicio) {
+                    totalMinutes += (new Date(almocoInicio.time) - new Date(entrada.time)) / 60000;
+                }
+                if (almocoFim && saida) {
+                    totalMinutes += (new Date(saida.time) - new Date(almocoFim.time)) / 60000;
+                }
+                
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = Math.floor(totalMinutes % 60);
+                
+                const labels = {
+                    'entrada': 'Entrada',
+                    'almoco_inicio': 'Início Almoço',
+                    'almoco_fim': 'Fim Almoço',
+                    'saida': 'Saída'
+                };
+                
+                return `
+                    <div class="history-day">
+                        <div class="history-header">
+                            <div class="history-date">${formattedDate}</div>
+                            <div class="history-hours">${hours}h ${minutes}min</div>
+                        </div>
+                        <div class="history-entries">
+                            ${dayRecords.map(entry => {
+                                const time = new Date(entry.time).toLocaleTimeString('pt-BR', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                });
+                                return `<div class="history-entry">${labels[entry.type]}: ${time}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Inicializar
+        updateClock();
+        setInterval(updateClock, 1000);
+        loadTodayRecords();
+        loadHistory();
+    </script>
+</body>
+</html>
